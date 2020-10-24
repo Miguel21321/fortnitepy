@@ -663,7 +663,10 @@ class PartyMemberMeta(MetaBase):
     @property
     def platform(self) -> str:
         base = self.get_prop('Default:Platform_j')
-        return base['Platform']['platformStr']
+        try:
+            return base['Platform']['platformStr']
+        except KeyError:
+            return base['Platform']['platformDescription']['name']
 
     @property
     def location(self) -> str:
