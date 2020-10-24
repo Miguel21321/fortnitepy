@@ -33,6 +33,7 @@ import uuid
 import itertools
 import unicodedata
 import aiohttp
+import ssl
 
 from xml.etree import ElementTree
 from collections import defaultdict
@@ -237,7 +238,7 @@ class WebsocketTransport:
             connector_owner=self.ws_connector is None,
         )
         self.connection = con = await self.session.ws_connect(
-            *args, **kwargs
+            *args, ssl=ssl.SSLContext(ssl.PROTOCOL_TLSv1), **kwargs
         )
 
         self.loop.create_task(self.reader())
