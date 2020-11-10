@@ -170,6 +170,7 @@ class Platform(Enum):
     SWITCH      = 'SWT'
     IOS         = 'IOS'
     ANDROID     = 'AND'
+    XBOXSERIESX = 'XBS'
 
 
 class UserSearchPlatform(Enum):
