@@ -50,7 +50,15 @@ class StoreItemBase:
         self._monthly_limit = data['monthlyLimit']
         self._offer_id = data['offerId']
         self._offer_type = data['offerType']
-        self._price = data['prices'][0]['finalPrice']
+        try:
+            self._price = data['prices'][0]['finalPrice']
+        except IndexError:
+            bundle_info = data.get('dynamicBundleInfo')
+            if bundle_info is not None:
+                self._price = (
+                    bundle_info['floorPrice']
+                    + sum([bundle['regularPrice'] for bundle in bundle_info['bundleItems']])
+                )
         self._refundable = data['refundable']
         self._items_grants = data['itemGrants']
         self._meta_info = data.get('metaInfo', [])
