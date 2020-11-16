@@ -2926,7 +2926,7 @@ class Client:
                 priority=priority,
                 config={**cfg1, **cfg2},
             ))
-            await asyncio.gather(*tasks)
+            await asyncio.wait(tasks, timeout=5)
 
             return party
 
