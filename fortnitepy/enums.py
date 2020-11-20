@@ -171,6 +171,7 @@ class Platform(Enum):
     XBOX          = 'XBL'
     XBOX_ONE      = 'XBL'
     XBOX_X        = 'XBX'
+    XSX           = 'XSX'
     XBOS_S        = 'XBS'
     SWITCH        = 'SWT'
     IOS           = 'IOS'
