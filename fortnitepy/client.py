@@ -3092,6 +3092,94 @@ class Client:
                 await self._create_party(acquire=False)
                 raise
 
+    async def join_party_ping(self, party_id: str,
+                              pinger_id: str) -> ClientParty:
+        """|coro|
+
+        Joins a party by the party id and pinger id.
+
+        Parameters
+        ----------
+        party_id: :class:`str`
+            The id of the party you wish to join.
+        pinger_id: :class:`str`
+            The id of the pinger
+
+        Raises
+        ------
+        .. warning::
+
+            Because the client has to leave its current party before joining
+            a new one, a new party is created if some of these errors are
+            raised. Most of the time though this is not the case and the client
+            will remain in its current party.
+        PartyError
+            You are already a member of this party.
+        NotFound
+            The party was not found.
+        NotFound
+            The ping was not found.
+        Forbidden
+            You are not allowed to join this party because it's private
+            and you have not been a part of it before.
+
+            .. note::
+
+                If you have been a part of the party before but got
+                kicked, you are ineligible to join this party and this
+                error is raised.
+        HTTPException
+            An error occurred when requesting to join the party.
+
+        Returns
+        -------
+        :class:`ClientParty`
+            The party that was just joined.
+        """
+        async with self._join_party_lock:
+            if party_id == self.party.id:
+                raise PartyError('You are already a member of this party.')
+
+            try:
+                pings = await self.http.party_lookup_ping(pinger_id)
+            except HTTPException as e:
+                m = 'errors.com.epicgames.social.party.ping_not_found'
+                if e.message_code == m:
+                    raise NotFound(
+                        'Could not find a ping with the pinger id {0}'.format(
+                            pinger_id
+                        )
+                    )
+
+                m = 'errors.com.epicgames.social.party.party_query_forbidden'  # noqa
+                if e.message_code == m:
+                    raise Forbidden(
+                        'You are not allowed to join this party.'
+                    )
+
+                raise
+
+            try:
+                party_data = None
+                for ping in pings:
+                    if party_id == ping['id']:
+                        party_data = ping
+                        break
+
+                if party_data is None:
+                    raise NotFound(
+                        'Could not find a party with the id {0}'.format(
+                            party_id
+                        )
+                    )
+
+                await self.party._leave()
+                party = await self._join_party(party_data)
+                return party
+            except Exception:
+                await self._create_party(acquire=False)
+                raise
+
     async def set_presence(self, status: str, *,
                            away: AwayStatus = AwayStatus.ONLINE) -> None:
         """|coro|
