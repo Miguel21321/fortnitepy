@@ -3613,7 +3613,7 @@ class ReceivedPartyInvitation:
         if self.net_cl != self.client.net_cl and self.client.net_cl != '':
             raise PartyError('Incompatible net_cl')
 
-        party = await self.client.join_party(self.party.id)
+        party = await self.client.join_party_ping(self.party.id, self.sender.id)
         asyncio.ensure_future(
             self.client.http.party_delete_ping(self.sender.id)
         )
