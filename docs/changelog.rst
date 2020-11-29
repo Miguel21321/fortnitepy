@@ -6,6 +6,38 @@ Changelog
 Detailed version changes.
 
 
+v3.3.4
+------
+
+Fixed typo in the :attr:`Platform.XBOX_X` value. Whoops.
+
+
+v3.3.3
+------
+
+Added
+~~~~~
+
+- Added :attr:`Platform.XBOX_X`
+- Added :attr:`Platform.PLAYSTATION_5`
+
+
+v3.3.2
+------
+
+Hotpatch to fix parties showing as outdated after the Fortnite v14.50 update.
+
+Added
+~~~~~
+
+- Added kwarg ``party_version`` to :class:`Client` so that a custom party version can be set.
+
+Bug Fixes
+~~~~~~~~~
+
+- Fixed parties showing as outdated.
+
+
 v3.3.1
 ------
 
