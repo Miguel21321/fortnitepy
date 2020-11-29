@@ -144,7 +144,7 @@ async def _start_client(client: 'Client', *,
                 raise e
             else:
                 if error_after is not None:
-                    if asyncio.iscoroutinefunction(after):
+                    if asyncio.iscoroutinefunction(error_after):
                         asyncio.ensure_future(error_after(client, e))
                     else:
                         error_after(client, e)
