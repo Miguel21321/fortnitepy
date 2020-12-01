@@ -63,6 +63,7 @@ class StoreItemBase:
         self._items_grants = data['itemGrants']
         self._meta_info = data.get('metaInfo', [])
         self._meta = data.get('meta', {})
+        self._sort_priority = data.get("sortPriority", -1)
 
     def __str__(self) -> str:
         return self.dev_name
@@ -193,6 +194,10 @@ class StoreItemBase:
         unfixed = self._meta.get('BannerOverride')
         if unfixed:
             return ' '.join(re.findall(r'[A-Z][^A-Z]*', unfixed))
+
+    @property
+    def sort_priority(self) -> int:
+        return self._sort_priority
 
 
 class FeaturedStoreItem(StoreItemBase):
