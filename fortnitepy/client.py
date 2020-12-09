@@ -3002,7 +3002,7 @@ class Client:
                 return True
 
             future = asyncio.ensure_future(
-                self.wait_for(event, check=check, timeout=5),
+                self.wait_for(event, check=check, timeout=10),
             )
 
             try:
