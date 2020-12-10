@@ -215,7 +215,7 @@ class SeasonStartTimestamp(Enum):
     SEASON_12 = 1582156801
     SEASON_13 = 1592352001
     SEASON_14 = 1598486401
-    SEASON_15 = 1606885201
+    SEASON_15 = 1606867201
 
 
 class SeasonEndTimestamp(Enum):
@@ -232,7 +232,7 @@ class SeasonEndTimestamp(Enum):
     SEASON_11 = 1582156800
     SEASON_12 = 1592352000
     SEASON_13 = 1598486400
-    SEASON_14 = 1606885200
+    SEASON_14 = 1606867200
 
 
 class BattlePassStat(Enum):
