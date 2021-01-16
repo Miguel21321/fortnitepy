@@ -445,6 +445,9 @@ class Friend(FriendBase):
             The content of the message.
         """
         await self.client.xmpp.send_friend_message(self.jid, content)
+        self.client.dispatch_event('friend_message_send',
+                                   self,
+                                   content)
 
     async def join_party(self) -> 'ClientParty':
         """|coro|

@@ -1833,6 +1833,7 @@ class ClientPartyMember(PartyMemberBase, Patchable):
             The new party the client is connected to after leaving.
         """
         self._cancel_clear_emote()
+        await self.client.dispatch_and_wait_event('before_leave_party')
 
         async with self.client._leave_lock:
             try:
@@ -3098,6 +3099,9 @@ class ClientParty(PartyBase, Patchable):
             The content of the message.
         """
         await self.client.xmpp.send_party_message(content)
+        self.client.dispatch_event('party_message_send',
+                                   self,
+                                   content)
 
     async def do_patch(self, updated: Optional[dict] = None,
                        deleted: Optional[list] = None,
@@ -3358,6 +3362,7 @@ class ClientParty(PartyBase, Patchable):
         me = self.me
         if me is not None:
             me._cancel_clear_emote()
+        await self.client.dispatch_and_wait_event('before_leave_party')
 
         await self.client.xmpp.leave_muc()
 
