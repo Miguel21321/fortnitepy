@@ -29,7 +29,6 @@ import asyncio
 import logging
 import json
 import re
-import ssl
 import time
 
 from typing import TYPE_CHECKING, List, Optional, Any, Union, Tuple
@@ -402,7 +401,7 @@ class HTTPClient:
             pass
 
         pre_time = time.time()
-        async with self.__session.request(method, url, ssl=ssl.SSLContext(ssl.PROTOCOL_TLSv1), **kwargs) as r:
+        async with self.__session.request(method, url, **kwargs) as r:
             log.debug('{0} {1} has returned {2.status} in {3:.2f}s'.format(
                 method,
                 url,
