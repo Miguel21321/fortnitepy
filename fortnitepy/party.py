@@ -46,6 +46,25 @@ if TYPE_CHECKING:
     from .client import Client
 
 
+class EditEntry:
+    def __init__(self, func: Awaitable, *args: Any, name: Optional[str] = None, **kwargs: Any) -> None:
+        if not asyncio.iscoroutinefunction(func):
+            raise TypeError('EditEntry function must be coroutine')
+
+        self.func = func
+        self.name = name or func.__qualname__
+        self.args = args
+        self.keywords = kwargs
+
+    def __repr__(self) -> str:
+        return ('<EditEntry func={0.func!r} name={0.name!r} '
+                'args={0.args!r} '
+                'kwargs={0.keywords!r}>'.format(self))
+
+    def __call__(self) -> Awaitable:
+        return self.func(*self.args, **self.keywords)
+
+
 class DefaultPartyConfig:
     """Data class for the default party configuration used when a new party
     is created.
@@ -243,15 +262,19 @@ class DefaultPartyMemberConfig:
         self.offline_ttl = kwargs.get('offline_ttl', 30)
         self.meta = kwargs.get('meta', [])
 
-    def update_meta(self, meta: List[functools.partial]) -> None:
+    def update_meta(self, meta: List[Union[functools.partial, EditEntry]]) -> None:
         names = []
         results = []
 
         unfiltered = [*meta[::-1], *self.meta[::-1]]
         for elem in unfiltered:
             coro = elem.func
-            if coro.__qualname__ not in names:
-                names.append(coro.__qualname__)
+            if isinstance(elem, EditEntry):
+                name = elem.name
+            else:
+                name = coro.__qualname__
+            if name not in names:
+                names.append(name)
                 results.append(elem)
 
             if not (asyncio.iscoroutine(coro)
@@ -317,20 +340,27 @@ class Patchable:
                 self._config_cache = {}
 
     async def _edit(self,
-                    *coros: List[Union[Awaitable, functools.partial]]) -> None:
+                    *coros: List[Union[Awaitable, functools.partial, EditEntry]]) -> None:
         to_gather = {}
         for coro in reversed(coros):
-            if isinstance(coro, functools.partial):
+            name = None
+            if isinstance(coro, EditEntry):
+                name = coro.name
+
+            if isinstance(coro, (functools.partial, EditEntry)):
                 result = getattr(coro.func, '__self__', None)
                 if result is None:
                     coro = coro.func(self, *coro.args, **coro.keywords)
                 else:
                     coro = coro()
 
-            if coro.__qualname__ in to_gather:
+            if name is None:
+                name = coro.__qualname__
+
+            if name in to_gather:
                 coro.close()
             else:
-                to_gather[coro.__qualname__] = coro
+                to_gather[name] = coro
 
         before = self.meta.schema.copy()
 
@@ -352,13 +382,15 @@ class Patchable:
         return updated, deleted, self._config_cache
 
     async def edit(self,
-                   *coros: List[Union[Awaitable, functools.partial]]
+                   *coros: List[Union[Awaitable, functools.partial, EditEntry]]
                    ) -> None:
         for coro in coros:
             if not (asyncio.iscoroutine(coro)
-                    or isinstance(coro, functools.partial)):
+                    or isinstance(coro, functools.partial)
+                    or isinstance(coro, EditEntry)):
                 raise TypeError('All arguments must be coroutines or a '
-                                'partials of coroutines')
+                                'partials of coroutines or a '
+                                'EditEntries')
 
         updated, deleted, config = await self._edit(*coros)
         return await self.patch(
@@ -368,12 +400,13 @@ class Patchable:
         )
 
     async def edit_and_keep(self,
-                            *coros: List[Union[Awaitable, functools.partial]]
+                            *coros: List[Union[Awaitable, functools.partial, EditEntry]]
                             ) -> None:
         new = []
         for coro in coros:
-            if not isinstance(coro, functools.partial):
-                raise TypeError('All arguments must partials of a coroutines')
+            if not isinstance(coro, (functools.partial, EditEntry)):
+                raise TypeError('All arguments must partials of a coroutines or a '
+                                'EditEntries')
 
             result = getattr(coro.func, '__self__', None)
             if result is not None:
@@ -1739,7 +1772,7 @@ class ClientPartyMember(PartyMemberBase, Patchable):
         return self.client.default_party_member_config.meta
 
     async def edit(self,
-                   *coros: List[Union[Awaitable, functools.partial]]
+                   *coros: List[Union[Awaitable, functools.partial, EditEntry]]
                    ) -> None:
         """|coro|
 
@@ -1770,7 +1803,7 @@ class ClientPartyMember(PartyMemberBase, Patchable):
         await super().edit(*coros)
 
     async def edit_and_keep(self,
-                            *coros: List[Union[Awaitable, functools.partial]]
+                            *coros: List[Union[Awaitable, functools.partial, EditEntry]]
                             ) -> None:
         """|coro|
 
@@ -3133,7 +3166,7 @@ class ClientParty(PartyBase, Patchable):
         return self.client.default_party_config.meta
 
     async def edit(self,
-                   *coros: List[Union[Awaitable, functools.partial]]
+                   *coros: List[Union[Awaitable, functools.partial, EditEntry]]
                    ) -> None:
         """|coro|
 
@@ -3163,7 +3196,7 @@ class ClientParty(PartyBase, Patchable):
         await super().edit(*coros)
 
     async def edit_and_keep(self,
-                            *coros: List[Union[Awaitable, functools.partial]]
+                            *coros: List[Union[Awaitable, functools.partial, EditEntry]]
                             ) -> None:
         """|coro|
 
