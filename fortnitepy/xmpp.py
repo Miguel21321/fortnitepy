@@ -894,11 +894,23 @@ class XMPPClient:
 
         member = party.get_member(user_id)
         if member is None:
-            member = (await party._update_members(
-                (body,),
-                remove_missing=False,
-                fetch_user_data=self.client.fetch_user_data_in_events,
-            ))[0]
+            if user_id == self.client.user.id:  # Why Epic won't provide member meta in party join event?
+                member = (await party._update_members(
+                    (body,),
+                    remove_missing=False,
+                    fetch_user_data=self.client.fetch_user_data_in_events,
+                ))[0]
+            else:
+                members = (await party._update_members(
+                    remove_missing=False,
+                    fetch_user_data=self.client.fetch_user_data_in_events,
+                ))
+                for m in members:
+                    if m.id == user_id:
+                        member = m
+                        break
+                else:
+                    return
 
         fut = None
         if party.me is not None:
