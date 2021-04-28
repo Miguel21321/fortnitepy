@@ -592,6 +592,28 @@ class PartyMemberMeta(MetaBase):
             'Default:SpectateAPartyMemberAvailable_b': "false",
             'Default:FeatDefinition_s': 'None',
             'Default:VoiceChatStatus_s': 'Disabled',
+            'Default:PlatformData_j': json.dumps({
+                'PlatformData': {
+                    'name': self.member.client.platform.value,
+                    'platformType': 'DESKTOP',
+                    'onlineSubsystem': 'None',
+                    'sessionType': '',
+                    'externalAccountType': '',
+                    'crossplayPool': 'DESKTOP',
+                },
+                'uniqueId': 'INVALID',
+                'sessionId': '',
+            }),
+            'Default:LobbyState_j': json.dumps({
+                'LobbyState': {
+                    'inGameReadyCheckStatus': 'None',
+                    'gameReadiness': 'NotReady',
+                    'readyInputType': 'Count',
+                    'currentInputType': 'MouseAndKeyboard',
+                    'hiddenMatchmakingDelayMax': 0,
+                    'hasPreloadedAthena': False,
+                },
+            }),
         }
 
         if meta is not None:
@@ -607,11 +629,19 @@ class PartyMemberMeta(MetaBase):
 
     @property
     def ready(self) -> bool:
-        return self.get_prop('Default:GameReadiness_s')
+        base = self.get_prop('Default:LobbyState_j')
+        if 'LobbyState' in base:
+            return base['LobbyState'].get('gameReadiness', 'None')
+        else:
+            return self.get_prop('Default:GameReadiness_s')
 
     @property
     def input(self) -> str:
-        return self.get_prop('Default:CurrentInputType_s')
+        base = self.get_prop('Default:LobbyState_j')
+        if 'LobbyState' in base:
+            return base['LobbyState'].get('currentInputType', 'None')
+        else:
+            return self.get_prop('Default:CurrentInputType_s')
 
     @property
     def assisted_challenge(self) -> str:
@@ -695,11 +725,18 @@ class PartyMemberMeta(MetaBase):
 
     @property
     def platform(self) -> str:
-        base = self.get_prop('Default:Platform_j')
-        try:
-            return base['Platform']['platformStr']
-        except KeyError:
-            return base['Platform']['platformDescription']['name']
+        base = self.get_prop('Default:PlatformData_j')
+        if 'PlatformData' in base:
+            try:
+                return base['PlatformData']['name']
+            except KeyError:
+                return base['PlatformData']['platformDescription']['name']
+        else:
+            base = self.get_prop('Default:Platform_j')
+            try:
+                return base['Platform']['platformStr']
+            except KeyError:
+                return base['Platform']['platformDescription']['name']
 
     @property
     def location(self) -> str:
@@ -707,7 +744,11 @@ class PartyMemberMeta(MetaBase):
 
     @property
     def has_preloaded(self) -> bool:
-        return self.get_prop('Default:HasPreloadedAthena_b')
+        base = self.get_prop('Default:LobbyState_j')
+        if 'LobbyState' in base:
+            return base['hasPreloadedAthena']
+        else:
+            return self.get_prop('Default:HasPreloadedAthena_b')
 
     @property
     def spectate_party_member_available(self) -> bool:
@@ -744,8 +785,11 @@ class PartyMemberMeta(MetaBase):
         return {key: self.set_prop(key, final)}
 
     def set_readiness(self, val: str) -> Dict[str, Any]:
-        key = 'Default:GameReadiness_s'
-        return {key: self.set_prop(key, val)}
+        data = self.get_prop('Default:LobbyState_j')['LobbyState']
+        data['gameReadiness'] = val
+        final = {'LobbyState': data}
+        key = 'Default:LobbyState_j'
+        return {key: self.set_prop(key, final)}
 
     def set_emote(self, emote: Optional[str] = None, *,
                   emote_ekey: Optional[str] = None,
