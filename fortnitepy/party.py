@@ -730,7 +730,7 @@ class PartyMemberMeta(MetaBase):
             try:
                 return base['PlatformData']['name']
             except KeyError:
-                return base['PlatformData']['platformDescription']['name']
+                return base['PlatformData']['platform']['platformDescription']['name']
         else:
             base = self.get_prop('Default:Platform_j')
             try:
