@@ -3227,6 +3227,42 @@ class Client:
                 await self._create_party(acquire=False)
                 raise
 
+    async def request_to_join(self, user_id: str) -> None:
+        """|coro|
+
+        Sends a request to join to specified user.
+
+        Parameters
+        ----------
+        user_id: :class:`str`
+            The id of the user you sends request to join.
+
+        Raises
+        PartyError
+            You are already a member of user's party.
+        PartyError
+            You can't send request to join to yourself.
+        Forbidden
+            You are not friend with this user.
+        HTTPException
+            An error occurred when sending request to join.
+        """
+        if user_id == self.user.id:
+            raise PartyError('You can\'t send request to join to yourself')
+
+        try:
+            await self.http.party_intention(user_id)
+        except HTTPException as e:
+            m = 'errors.com.epicgames.social.party.user_already_in_party'
+            if e.message_code == m:
+                raise PartyError('You are already a member of this party')
+
+            m = 'errors.com.epicgames.social.party.intention_forbidden'
+            if e.message_code == m:
+                raise Forbidden('You are not friend with this user')
+
+            raise
+
     async def set_presence(self, status: str, *,
                            away: AwayStatus = AwayStatus.ONLINE) -> None:
         """|coro|

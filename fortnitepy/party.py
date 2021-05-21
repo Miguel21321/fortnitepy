@@ -4128,3 +4128,57 @@ class PartyJoinConfirmation:
                 return
 
             raise
+
+
+class PartyJoinRequest:
+    """Represents a join request.
+
+    Attributes
+    ----------
+    client: :class:`Client`
+        The client.
+    party: :class:`ClientParty`
+        The party the user wants to join.
+    requester: :class:`Friend`
+        The friend who requested to join the party.
+    created_at: :class:`datetime.datetime`
+        The UTC time of when the join request was received.
+    """
+    def __init__(self, client: 'Client',
+                 party: ClientParty,
+                 requester: Friend,
+                 data: dict) -> None:
+        self.client = client
+        self.party = party
+        self.requester = requester
+        
+        self.created_at = self.client.from_iso(data['sent_at'])
+        self.expires_at = self.client.from_iso(data['expires_at'])
+
+    def __repr__(self) -> str:
+        return ('<PartyJoinRequest party={0.party!r} requester={0.requester!r} '
+                'created_at={0.created_at!r} expires_at={0.expires_at}>'.format(self))
+
+    def __eq__(self, other):
+        return (isinstance(other, PartyJoinRequest)
+                and other.requester == self.requester)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    async def accept(self) -> None:
+        """|coro|
+
+        Accepts this join request.
+
+        PartyError
+            Friend is already in your party.
+        PartyError
+            The party is full.
+        HTTPException
+            Something went wrong when trying to invite this friend.
+        """
+        if self.client.is_creating_party():
+            return
+
+        return await self.requester.invite()

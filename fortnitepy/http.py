@@ -1379,6 +1379,14 @@ class HTTPClient:
     #             Party               #
     ###################################
 
+    async def party_intention(self, user_id: str) -> Any:
+        r = PartyService(
+            '/party/api/v1/Fortnite/members/{user_id}/intentions/{client_id}',
+            user_id=user_id,
+            client_id=self.client.user.id
+        )
+        return await self.post(r, json={})
+
     async def party_disconnect(self, party_id: str, user_id: str):
         r = PartyService(
             'party/api/v1/Fortnite/parties/{party_id}/members/{user_id}/disconnect',  # noqa

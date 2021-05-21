@@ -24,6 +24,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+from asyncio.locks import Event
 import aioxmpp
 import asyncio
 import json
@@ -40,7 +41,7 @@ from typing import TYPE_CHECKING, Optional, Union, Awaitable, Any, Tuple
 
 from .errors import XMPPError, PartyError, HTTPException
 from .message import FriendMessage, PartyMessage
-from .party import Party, ReceivedPartyInvitation, PartyJoinConfirmation
+from .party import Party, ReceivedPartyInvitation, PartyJoinConfirmation, PartyJoinRequest
 from .presence import Presence
 from .enums import AwayStatus
 
@@ -1321,6 +1322,51 @@ class XMPPClient:
         friend = self.client.get_friend(body['invitee_id'])
         if friend is not None:
             self.client.dispatch_event('party_invite_decline', friend)
+
+    @dispatcher.event('com.epicgames.social.party.notification.v0.INITIAL_INTENTION')  # noqa
+    async def event_party_join_request(self, ctx: EventContext) -> None:
+        body = ctx.body
+
+        requester_id = body.get('requester_id')
+        requester = self.client.get_friend(requester_id)
+        if requester is None:
+            try:
+                requester = await self.client.wait_for(
+                    'friend_add',
+                    check=lambda f: f.id == requester_id,
+                    timeout=1
+                )
+            except asyncio.TimeoutError:
+                return
+
+        party = self.client.party
+
+        if party is None:
+            return
+
+        if party.id != body.get('party_id'):
+            return
+
+        request = PartyJoinRequest(self.client, party, requester, body)
+        self.client.dispatch_event('party_join_request', request)
+
+    @dispatcher.event('com.epicgames.social.party.notification.v0.INTENTION_EXPIRED')  # noqa
+    async def event_party_join_request_expired(self, ctx: EventContext) -> None:
+        body = ctx.body
+        
+        requester_id = body.get('requester_id')
+        requester = self.client.get_friend(requester_id)
+        if requester is None:
+            try:
+                requester = await self.client.wait_for(
+                    'friend_add',
+                    check=lambda f: f.id == requester_id,
+                    timeout=1
+                )
+            except asyncio.TimeoutError:
+                return
+
+        self.client.dispatch_event('party_join_request_expired', requester)
 
     @dispatcher.presence()
     async def process_presence(self, user_id: str,

@@ -460,6 +460,22 @@ class Friend(FriendBase):
         """
         return await self.client.party.invite(self.id)
 
+    async def request_to_join(self) -> None:
+        """|coro|
+
+        Sends request to join to this friend.
+
+        Raises
+        ------
+        PartyError
+            Friend is already in your party.
+        PartyError
+            The party is full.
+        HTTPException
+            Something went wrong when trying to send request to join.
+        """
+        return await self.client.request_to_join(self.id)
+
 
 class PendingFriendBase(FriendBase):
     """Represents a pending friend from Fortnite."""
