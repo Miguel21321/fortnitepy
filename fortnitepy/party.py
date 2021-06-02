@@ -3795,7 +3795,7 @@ class ClientParty(PartyBase, Patchable):
 
     def _construct_raw_squad_assignments(self,
                                          assignments: Dict[PartyMember, SquadAssignment] = None,  # noqa
-                                         new_positions: Dict[str, int] = None
+                                         new_positions: Dict[str, int] = None,
                                          ) -> Dict[str, Any]:
         ret = self.construct_squad_assignments(
             assignments=assignments,
