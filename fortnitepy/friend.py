@@ -27,10 +27,10 @@ SOFTWARE.
 import datetime
 
 from typing import TYPE_CHECKING, List, Optional
-from aioxmpp import JID
 
-from .user import UserBase, ExternalAuth
-from .errors import PartyError, Forbidden, HTTPException
+from .user import UserBase
+from .errors import (FriendOffline, InvalidOffer, PartyError, Forbidden,
+                     HTTPException)
 from .presence import Presence
 from .enums import Platform
 
@@ -463,18 +463,78 @@ class Friend(FriendBase):
     async def request_to_join(self) -> None:
         """|coro|
 
-        Sends request to join to this friend.
+        Sends a request to join a friends party. This is mainly used for
+        requesting to join private parties specifically, but it can be used
+        for all types of party privacies.
+
+        .. warning::
+
+            If the request is accepted by the receiving friend, the bot will
+            receive a regular party invitation. Unlike the fortnite client,
+            fortnitepy will not automatically accept this invitation. You have
+            to make some logic for doing that yourself.
 
         Raises
         ------
         PartyError
-            Friend is already in your party.
-        PartyError
-            The party is full.
+            You are already a part of this friends party.
+        FriendOffline
+            The friend you requested to join is offline.
         HTTPException
-            Something went wrong when trying to send request to join.
+            An error occured while requesting.
         """
-        return await self.client.request_to_join(self.id)
+        try:
+            await self.client.http.party_send_intention(self.id)
+        except HTTPException as exc:
+            m = 'errors.com.epicgames.social.party.user_already_in_party'
+            if exc.message_code == m:
+                raise PartyError(
+                    'The bot is already a part of this friends party.'
+                )
+
+            m = 'errors.com.epicgames.social.party.user_has_no_party'
+            if exc.message_code == m:
+                raise FriendOffline(
+                    'The friend you requested to join is offline.'
+                )
+
+            raise
+
+    async def owns_offer(self, offer_id: str) -> bool:
+        """|coro|
+
+        Checks if a friend owns a currently active offer in the item shop.
+
+        Raises
+        ------
+        InvalidOffer
+            An invalid/outdated offer_id was passed. Only offers currently in
+            the item shop are valid.
+        HTTPException
+            An error occured while requesting.
+
+        Returns
+        -------
+        :class:`bool`
+            Whether or not the friend owns the offer.
+        """
+        try:
+            await self.client.http.fortnite_check_gift_eligibility(
+                self.id,
+                offer_id,
+            )
+        except HTTPException as exc:
+            m = 'errors.com.epicgames.modules.gamesubcatalog.purchase_not_allowed'  # noqa
+            if exc.message_code == m:
+                return True
+
+            m = 'errors.com.epicgames.modules.gamesubcatalog.catalog_out_of_date'  # noqa
+            if exc.message_code == m:
+                raise InvalidOffer('The offer_id passed is not valid.')
+
+            raise
+
+        return False
 
 
 class PendingFriendBase(FriendBase):
