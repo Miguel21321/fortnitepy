@@ -1797,9 +1797,6 @@ class PartyMemberBase(User):
 
         Parameters
         ----------
-        item: :class:`str`
-            The variant item type. This defaults to ``AthenaCharacter`` which
-            is what you want to use if you are changing skin variants.
         config_overrides: Dict[:class:`str`, :class:`str`]
             A config that overrides the default config for the variant
             backend names. Example: ::
@@ -2712,7 +2709,13 @@ class ClientPartyMember(PartyMemberBase, Patchable):
     async def _schedule_clear_emote(self, seconds: Union[int, float]) -> None:
         await asyncio.sleep(seconds)
         self.clear_emote_task = None
-        await self.clear_emote()
+
+        try:
+            await self.clear_emote()
+        except HTTPException as exc:
+            m = 'errors.com.epicgames.social.party.member_not_found'
+            if m != exc.message_code:
+                raise
 
     async def clear_emote(self) -> None:
         """|coro|

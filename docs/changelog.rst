@@ -6,6 +6,47 @@ Changelog
 Detailed version changes.
 
 
+v3.6.4
+------
+
+Bug fixes
+~~~~~~~~~
+
+- Fixed ``parameter_required`` error on email/password login.
+- Fixed :meth:`Client.search_users()`.
+- Fixed fetch multiple stats methods to work with more than 20 stat keys at the same time.
+
+
+v3.6.3
+------
+
+Bug fixes
+~~~~~~~~~
+
+- Fixed an issue that made it possible for programs with ill intent to send events to the client.
+
+
+v3.6.2
+------
+
+Added
+~~~~~
+
+- Added timestamps related to fortnite season 17.
+  - :attr:`SeasonStartTimestamp.SEASON_17`
+  - :attr:`SeasonEndTimestamp.SEASON_16`
+
+Bug Fixes
+~~~~~~~~~
+
+- Fixed an issue where the client could attempt to clear an emote after it had already left the party.
+
+Misc
+~~~~
+
+- New documentation design. Woo.
+
+
 v3.6.1
 ------
 
@@ -627,8 +668,8 @@ Changes
 - Fixed an issue where constructing presences would fail in some cases due to an unexpected type.
 
 
-v2.0.1 - v2.0.3
----------------
+v2.0.1
+------
 
 Hotpatches to fix some overlooked major bugs.
 
