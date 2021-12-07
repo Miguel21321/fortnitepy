@@ -163,6 +163,7 @@ class Region(Enum):
 
 
 class Platform(Enum):
+    PC            = 'PC'
     WINDOWS       = 'WIN'
     MAC           = 'MAC'
     PLAYSTATION   = 'PSN'
